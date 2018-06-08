@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<topology xmlns="http://www.cisco.com/VIRL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" schemaVersion="0.95" xsi:schemaLocation="http://www.cisco.com/VIRL https://raw.github.com/CiscoVIRL/schema/v0.95/virl.xsd">
+    <extensions>
+        <entry key="management_network" type="String">flat</entry>
+        <entry key="management_lxc" type="Boolean">false</entry>
+    </extensions>
+    <node name="devbox" type="SIMPLE" subtype="server" location="601,215">
+        <extensions>
+            <entry key="config" type="string">#cloud-config
+bootcmd:
+- ln -s -t /etc/rc.d /etc/rc.local
+hostname: devbox
+manage_etc_hosts: true
+runcmd:
+- start ttyS0
+- systemctl start getty@ttyS0.service
+- systemctl start rc-local
+- sed -i '/^\s*PasswordAuthentication\s\+no/d' /etc/ssh/sshd_config
+- echo "UseDNS no" &gt;&gt; /etc/ssh/sshd_config
+- service ssh restart
+- service sshd restart
+users:
+- default
+- gecos: User configured by VIRL Configuration Engine 0.23.10
+  lock-passwd: false
+  name: cisco
+  plain-text-passwd: cisco
+  shell: /bin/bash
+  ssh-authorized-keys:
+  - VIRL-USER-SSH-PUBLIC-KEY
+  sudo: ALL=(ALL) ALL
+write_files:
+- path: /etc/init/ttyS0.conf
+  owner: root:root
+  content: |
+    # ttyS0 - getty
+    # This service maintains a getty on ttyS0 from the point the system is
+    # started until it is shut down again.
+    start on stopped rc or RUNLEVEL=[12345]
+    stop on runlevel [!12345]
+    respawn
+    exec /sbin/getty -L 115200 ttyS0 vt102
+  permissions: '0644'
+- path: /etc/systemd/system/dhclient@.service
+  content: |
+    [Unit]
+    Description=Run dhclient on %i interface
+    After=network.target
+    [Service]
+    Type=oneshot
+    ExecStart=/sbin/dhclient %i -pf /var/run/dhclient.%i.pid -lf /var/lib/dhclient/dhclient.%i.lease
+    RemainAfterExit=yes
+  owner: root:root
+  permissions: '0644'
+</entry>
+        </extensions>
+    </node>
+    <annotations/>
+</topology>
