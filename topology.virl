@@ -19,12 +19,23 @@ runcmd:
 - echo "UseDNS no" &gt;&gt; /etc/ssh/sshd_config
 - service ssh restart
 - service sshd restart
+- sudo apt-get update
+- sudo apt-get install -y python python-pip python3 python3-pip
+
+package_update: true
+package_upgrade: false
+
+packages:
+- docker
+- docker-compose
+
 users:
 - default
 - gecos: User configured by VIRL Configuration Engine 0.23.10
   lock-passwd: false
   name: cisco
   plain-text-passwd: cisco
+  groups: admin, docker
   shell: /bin/bash
   ssh-authorized-keys:
   - VIRL-USER-SSH-PUBLIC-KEY
